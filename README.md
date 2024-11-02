@@ -42,6 +42,9 @@ In `ollama.nvim`, you can interact with the chat interface using the following k
 - **Clear Session**:
   - Insert Mode: `<C-l>`
   - Normal Mode: `<C-l>`
+- **New Session**:
+  - Insert Mode: `<C-n>`
+  - Normal Mode: `<C-n>`
 - **Toggle Help**:
   - Normal Mode: `?`
 
@@ -59,38 +62,46 @@ Sessions are automatically saved upon Neovim exit and restored on startup. The `
 
 
 ## Telescope integration
-
 ### Commands
-
 #### List Sessions
+
+To list and manage chat sessions, use the following command in Neovim:
 
 ```vim
 :Telescope ollama list
 ```
 
-This command opens a Telescope picker with a list of all active sessions. Each entry shows the session ID and the first message content.
-
-#### Session Actions
-
-- **Open a Session**: Select a session to open it in the Ollama chat window.
-- **Delete a Session**: Press `<C-x>` in Normal or Insert mode to delete the selected session.
-
-### Key Mappings
-
-Inside the session picker:
-
-- **`<Enter>`**: Opens the selected session.
-- **`<C-x>`**: Deletes the selected session.
-
-## API
-
-### `list_sessions`
-
-`list_sessions` is the main function used to list chat sessions. It can be invoked directly:
+It can be invoked directly:
 
 ```lua
 require('telescope').extensions.ollama.list()
 ```
+
+##### Available Actions
+
+- **Open Session**: Press `<CR>` to open the selected session.
+- **Delete Session**: Press `<C-x>` in normal or insert mode to delete the selected session.
+
+
+
+#### List Models
+
+To list available models and set a default model:
+
+```vim
+:Telescope ollama models
+```
+
+It can be invoked directly:
+
+```lua
+require('telescope').extensions.ollama.models()
+```
+
+##### Available Actions
+
+- **Set Default Model**: Press `<CR>` to set the selected model as the default for new sessions.
+
 
 ## License
 
