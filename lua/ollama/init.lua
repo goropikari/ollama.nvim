@@ -141,6 +141,10 @@ function session.new(opts)
     end
   end
 
+  obj.remove = function(self)
+    vim.api.nvim_buf_delete(self.bufnr, { force = true })
+  end
+
   obj.toggle_window = function(self)
     if vim.api.nvim_win_is_valid(global_state.winid) then
       vim.api.nvim_win_close(global_state.winid, false)
@@ -302,10 +306,12 @@ function Chat.new()
   end
 
   obj.remove_session = function(self, key)
-    self.sessions[key] = nil
+    local sess = self.sessions[key]
+    sess:remove()
     if self.current_session_key == key then
       self.current_session_key = ''
     end
+    self.sessions[key] = nil
   end
 
   obj.print = function(self)
