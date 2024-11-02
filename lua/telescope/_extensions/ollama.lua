@@ -1,4 +1,4 @@
-local ok, _ = pcall(require, 'ollama')
+local ok, _ = pcall(require, 'telescope')
 if not ok then
   return
 end
@@ -46,7 +46,7 @@ local function list_sessions(opts)
   opts = opts or {}
   pickers
     .new(opts, {
-      -- prompt_title = 'session',
+      prompt_title = 'session',
       finder = list_sessions_finder(),
       previewer = previewers.new_buffer_previewer({
         define_preview = function(self, entry)
@@ -57,12 +57,11 @@ local function list_sessions(opts)
             if msg.role == 'user' then
               vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, { '# User' })
             else
-              vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, { '# LLM' })
+              vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, { '# LLM (' .. session.config.model .. ')' })
             end
             vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, vim.split(msg.content or '', '\n'))
             vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, { '' })
           end
-          vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
         end,
       }),
       sorter = conf.generic_sorter(opts),
@@ -87,7 +86,7 @@ local function list_models(opts)
   opts = opts or {}
   pickers
     .new(opts, {
-      -- prompt_title = 'session',
+      prompt_title = 'model',
       finder = finders.new_table({
         results = (function()
           local res = nil
