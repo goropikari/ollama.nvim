@@ -67,17 +67,17 @@ function help.toggle(self)
   end
 end
 
-local function write_buffer(bufnr, user_prompt, llm_prompt, messages)
+local function write_buffer(bufnr, user_header, llm_header, messages)
   for i, msg in ipairs(messages) do
     if msg.role == 'user' then
-      vim.api.nvim_buf_set_lines(bufnr, i == 1 and 0 or -1, -1, true, { user_prompt })
+      vim.api.nvim_buf_set_lines(bufnr, i == 1 and 0 or -1, -1, true, { user_header })
     else
-      vim.api.nvim_buf_set_lines(bufnr, -1, -1, true, { llm_prompt })
+      vim.api.nvim_buf_set_lines(bufnr, -1, -1, true, { llm_header })
     end
     vim.api.nvim_buf_set_lines(bufnr, -1, -1, true, vim.split(msg.content or '', '\n'))
     vim.api.nvim_buf_set_lines(bufnr, -1, -1, true, { '' })
   end
-  vim.api.nvim_buf_set_lines(bufnr, #messages == 0 and 0 or -1, -1, true, { user_prompt, '' })
+  vim.api.nvim_buf_set_lines(bufnr, #messages == 0 and 0 or -1, -1, true, { user_header, '' })
 end
 
 ---@class Message
@@ -112,16 +112,16 @@ function session.new(opts)
     },
   }
 
-  obj._user_prompt = function(self)
+  obj._user_header = function(self)
     return '# User'
   end
 
-  obj._llm_prompt = function(self)
+  obj._llm_header = function(self)
     return '# LLM (' .. self.config.model .. ')'
   end
 
   obj._write_buffer = function(self)
-    write_buffer(self.bufnr, self:_user_prompt(), self:_llm_prompt(), self.messages)
+    write_buffer(self.bufnr, self:_user_header(), self:_llm_header(), self.messages)
     self:_update_last_line_num()
     self.is_empty = false
   end
@@ -156,7 +156,7 @@ function session.new(opts)
 
   obj.open_window = function(self)
     if obj.is_empty then
-      vim.api.nvim_buf_set_lines(obj.bufnr, 0, -1, false, { self:_user_prompt(), '' })
+      vim.api.nvim_buf_set_lines(obj.bufnr, 0, -1, false, { self:_user_header(), '' })
       self:_update_last_line_num()
       obj.is_empty = false
     end
@@ -179,7 +179,7 @@ function session.new(opts)
         table.insert(obj.tmp_assistant_message, content)
         vim.api.nvim_buf_set_text(obj.bufnr, -1, -1, -1, -1, vim.split(content, '\n'))
         if res.done then
-          vim.api.nvim_buf_set_lines(obj.bufnr, -1, -1, false, { '', obj:_user_prompt(), '' })
+          vim.api.nvim_buf_set_lines(obj.bufnr, -1, -1, false, { '', obj:_user_header(), '' })
           obj:_update_last_line_num()
           table.insert(obj.messages, {
             role = 'assistant',
@@ -198,7 +198,7 @@ function session.new(opts)
     callback = function()
       local user_input = vim.api.nvim_buf_get_lines(obj.bufnr, obj.last_line_num - 1, -1, false)
       local user_text = vim.fn.join(user_input, '\n')
-      vim.api.nvim_buf_set_lines(obj.bufnr, -1, -1, false, { '', obj:_llm_prompt(), '' })
+      vim.api.nvim_buf_set_lines(obj.bufnr, -1, -1, false, { '', obj:_llm_header(), '' })
 
       local timer = spinner.new():start(obj.bufnr)
       local timer_processing = true
