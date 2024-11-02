@@ -11,7 +11,7 @@ local previewers = require('telescope.previewers')
 local conf = require('telescope.config').values
 local transform_mod = require('telescope.actions.mt').transform_mod
 
-local function make_finder()
+local function list_sessions_finder()
   return finders.new_table({
     results = (function()
       local chat = require('ollama').chat
@@ -35,7 +35,7 @@ local function delete_session(prompt_bufnr)
   local entry = action_state.get_selected_entry()
   require('ollama').chat:remove_session(entry.value.id)
   local current_picker = action_state.get_current_picker(prompt_bufnr)
-  current_picker:refresh(make_finder())
+  current_picker:refresh(list_sessions_finder())
 end
 
 local ollama_actions = transform_mod({
@@ -47,10 +47,12 @@ local function list_sessions(opts)
   pickers
     .new(opts, {
       -- prompt_title = 'session',
-      finder = make_finder(),
+      finder = list_sessions_finder(),
       previewer = previewers.new_buffer_previewer({
         define_preview = function(self, entry)
           local session = entry.value
+          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, true, { 'model: ' .. session.config.model, '' })
+
           for _, msg in ipairs(session.messages) do
             if msg.role == 'user' then
               vim.api.nvim_buf_set_lines(self.state.bufnr, -1, -1, true, { '# User' })
@@ -81,9 +83,57 @@ local function list_sessions(opts)
     :find()
 end
 
+local function list_models(opts)
+  opts = opts or {}
+  pickers
+    .new(opts, {
+      -- prompt_title = 'session',
+      finder = finders.new_table({
+        results = (function()
+          local res = nil
+          vim
+            .system({ 'curl', '-s', 'http://localhost:11434/api/tags' }, {
+              stdout = function(_, data)
+                if data then
+                  res = vim.json.decode(data)
+                end
+              end,
+            })
+            :wait()
+          return res.models
+        end)(),
+        entry_maker = function(entry)
+          return {
+            value = entry,
+            display = entry.model,
+            ordinal = entry.model,
+          }
+        end,
+      }),
+      previewer = previewers.new_buffer_previewer({
+        define_preview = function(self, entry)
+          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, true, vim.split(vim.inspect(entry.value), '\n'))
+        end,
+      }),
+      sorter = conf.generic_sorter(opts),
+      attach_mappings = function(prompt_bufnr, map)
+        actions.select_default:replace(function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+
+          require('ollama').change_default_chat_model(selection.value.model)
+        end)
+
+        return true
+      end,
+    })
+    :find()
+end
+
 return require('telescope').register_extension({
   exports = {
     list = list_sessions,
+    models = list_models,
     actions = ollama_actions,
   },
 })

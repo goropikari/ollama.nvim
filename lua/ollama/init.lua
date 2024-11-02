@@ -88,7 +88,9 @@ function session.new(opts)
     last_line_num = -1, -- 1-index
     messages = opts.messages or {},
     tmp_assistant_message = {},
-    config = global_internal_config,
+    config = opts.config or {
+      model = global_internal_config.chat.model,
+    },
     win_opts = {
       split = 'left',
       width = math.floor(vim.o.columns * 0.3),
@@ -181,7 +183,7 @@ function session.new(opts)
         vim.fn.flatten({
           'curl',
           '--no-buffer',
-          obj.config.chat.url,
+          global_internal_config.chat.url,
           '-d',
           converter.to_chat_request(obj.config, obj.messages),
         }),
@@ -291,6 +293,7 @@ function Chat.new()
         self:new_session({
           id = content.key,
           messages = content.messages,
+          config = content.config,
         })
         self.current_session_key = content.key
       end
@@ -309,7 +312,7 @@ function Chat.new()
     if file then
       local data = {}
       for key, sess in pairs(self.sessions) do
-        table.insert(data, { key = key, messages = sess.messages })
+        table.insert(data, { key = key, config = sess.config, messages = sess.messages })
       end
       file:write(vim.json.encode(data))
       file:close()
@@ -331,6 +334,14 @@ end
 
 function M.clear_session()
   M.chat:clear_session()
+end
+
+function M.change_default_chat_model(model)
+  global_internal_config.chat.model = model
+end
+
+function M.show_config()
+  vim.print(global_internal_config)
 end
 
 function M.setup(opts)

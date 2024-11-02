@@ -2,7 +2,7 @@ local M = {}
 
 function M.to_chat_request(config, messages)
   return vim.json.encode({
-    model = config.chat.model,
+    model = config.model,
     messages = messages,
   })
 end

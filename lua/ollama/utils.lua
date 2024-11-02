@@ -15,7 +15,7 @@ end
 ---@param bufnr number
 ---@param winid number
 function M.move_bottom(winid, bufnr)
-  if vim.api.nvim_win_is_valid(winid) then
+  if vim.api.nvim_win_is_valid(winid) and vim.api.nvim_win_get_buf(winid) == bufnr then
     local last_num = vim.api.nvim_buf_line_count(bufnr)
     vim.api.nvim_win_set_cursor(winid, { last_num, 0 })
   end
