@@ -387,4 +387,8 @@ function M.setup(opts)
   })
 end
 
+vim.api.nvim_create_user_command('OllamaChat', function()
+  M.open_chat()
+end, {})
+
 return M
