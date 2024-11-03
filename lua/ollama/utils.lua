@@ -20,4 +20,29 @@ function M.move_bottom(winid, bufnr)
   end
 end
 
+function M.build_window_opts(win_opts)
+  local layout = win_opts.layout
+  local width = math.floor(vim.o.columns * win_opts.width)
+  local height = math.floor(vim.o.lines * win_opts.height)
+  if layout == 'float' then
+    return {
+      relative = 'editor',
+      width = width,
+      height = height,
+      col = math.floor((vim.o.columns - width) / 2),
+      row = math.floor(vim.o.lines * 0.1),
+      border = win_opts.border,
+      style = 'minimal',
+      title = win_opts.title,
+      title_pos = 'center',
+    }
+  end
+
+  return {
+    split = layout,
+    width = math.floor(vim.o.columns * win_opts.width),
+    height = math.floor(vim.o.lines * win_opts.height),
+  }
+end
+
 return M

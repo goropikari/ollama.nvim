@@ -23,6 +23,15 @@ Install with your preferred plugin manager, for example, using `lazy.nvim`:
       model = 'codegemma',
       url = 'http://localhost:11434/api/chat',
     },
+    window = {
+      layout = 'left', -- 'float', 'left', 'right', 'above', 'below'
+      width = 0.5, -- fractional width of parent
+      height = 0.5, -- fractional height of parent
+      -- Options below only apply to floating windows
+      relative = 'editor',
+      border = 'single', -- 'none', single', 'double', 'rounded', 'solid', 'shadow'
+      title = 'Ollama Chat', -- title of chat window
+    },
     save_path = vim.fn.stdpath('state') .. '/ollama.nvim/state.json',
   },
 }
@@ -45,6 +54,8 @@ In `ollama.nvim`, you can interact with the chat interface using the following k
 - **New Session**:
   - Insert Mode: `<C-n>`
   - Normal Mode: `<C-n>`
+- **Close Window**:
+  - Normal Mode: `<esc>`
 - **Toggle Help**:
   - Normal Mode: `?`
 

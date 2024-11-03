@@ -12,6 +12,15 @@ local default_config = {
     model = 'codegemma',
     url = 'http://localhost:11434/api/chat',
   },
+  window = {
+    layout = 'left', -- 'float', 'left', 'right', 'above', 'below'
+    width = 0.5, -- fractional width of parent
+    height = 0.5, -- fractional height of parent
+    -- Options below only apply to floating windows
+    relative = 'editor',
+    border = 'single', -- 'none', single', 'double', 'rounded', 'solid', 'shadow'
+    title = 'Ollama Chat', -- title of chat window
+  },
   save_path = vim.fn.stdpath('state') .. '/ollama.nvim/state.json',
 }
 
@@ -42,6 +51,7 @@ local help = {
     'n -> <c-l> -> clear session',
     'i -> <c-n> -> new session',
     'n -> <c-n> -> new session',
+    'n -> <esc> -> close window',
     'n -> ? -> toggle help',
   },
 }
@@ -106,10 +116,6 @@ function session.new(opts)
     config = opts.config or {
       model = global_internal_config.chat.model,
     },
-    win_opts = {
-      split = 'left',
-      width = math.floor(vim.o.columns * 0.3),
-    },
   }
 
   obj._user_header = function(self)
@@ -163,7 +169,7 @@ function session.new(opts)
     if vim.api.nvim_win_is_valid(global_state.winid) then
       vim.api.nvim_win_set_buf(global_state.winid, self.bufnr)
     else
-      global_state.winid = vim.api.nvim_open_win(self.bufnr, true, self.win_opts)
+      global_state.winid = vim.api.nvim_open_win(self.bufnr, true, utils.build_window_opts(global_internal_config.window))
     end
   end
 
@@ -253,6 +259,16 @@ function session.new(opts)
     silent = true,
     callback = function()
       M.new_session()
+    end,
+  })
+
+  vim.keymap.set({ 'n' }, '<esc>', '', {
+    buffer = obj.bufnr,
+    silent = true,
+    callback = function()
+      if vim.api.nvim_win_is_valid(global_state.winid) then
+        vim.api.nvim_win_hide(global_state.winid)
+      end
     end,
   })
 
