@@ -3,6 +3,7 @@ if not ok then
   return
 end
 
+local telescope = require('telescope')
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local pickers = require('telescope.pickers')
@@ -10,11 +11,12 @@ local finders = require('telescope.finders')
 local previewers = require('telescope.previewers')
 local conf = require('telescope.config').values
 local transform_mod = require('telescope.actions.mt').transform_mod
+local ollama = require('ollama')
 
 local function list_sessions_finder()
   return finders.new_table({
     results = (function()
-      local chat = require('ollama').chat
+      local chat = ollama.chat
       if chat ~= nil then
         return chat:list_sessions()
       else
@@ -24,7 +26,7 @@ local function list_sessions_finder()
     entry_maker = function(entry)
       return {
         value = entry,
-        display = entry.id .. ' ' .. (entry.messages[1] or { content = '' }).content,
+        display = entry.id .. ' ' .. vim.split((entry.messages[1] or { content = '' }).content, '\n')[1],
         ordinal = entry.id,
       }
     end,
@@ -33,7 +35,7 @@ end
 
 local function delete_session(prompt_bufnr)
   local entry = action_state.get_selected_entry()
-  require('ollama').chat:remove_session(entry.value.id)
+  ollama.chat:remove_session(entry.value.id)
   local current_picker = action_state.get_current_picker(prompt_bufnr)
   current_picker:refresh(list_sessions_finder())
 end
@@ -70,7 +72,7 @@ local function list_sessions(opts)
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
 
-          require('ollama').chat:open_session(selection.value.id)
+          ollama.chat:open_session(selection.value.id)
         end)
 
         map('n', '<c-x>', ollama_actions.delete_selected)
@@ -88,19 +90,7 @@ local function list_models(opts)
     .new(opts, {
       prompt_title = 'model',
       finder = finders.new_table({
-        results = (function()
-          local res = nil
-          vim
-            .system({ 'curl', '-s', 'http://localhost:11434/api/tags' }, {
-              stdout = function(_, data)
-                if data then
-                  res = vim.json.decode(data)
-                end
-              end,
-            })
-            :wait()
-          return res.models
-        end)(),
+        results = ollama._list_models(),
         entry_maker = function(entry)
           return {
             value = entry,
@@ -120,7 +110,7 @@ local function list_models(opts)
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
 
-          require('ollama').change_default_chat_model(selection.value.model)
+          ollama.change_default_chat_model(selection.value.model)
         end)
 
         return true
@@ -129,7 +119,7 @@ local function list_models(opts)
     :find()
 end
 
-return require('telescope').register_extension({
+return telescope.register_extension({
   exports = {
     list = list_sessions,
     models = list_models,

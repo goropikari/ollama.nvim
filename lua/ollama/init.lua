@@ -8,9 +8,9 @@ local M = {}
 ---@field chat {model:string, url:string}
 ---@field save_path string
 local default_config = {
+  base_url = 'http://localhost:11434',
   chat = {
     model = 'codegemma',
-    url = 'http://localhost:11434/api/chat',
   },
   window = {
     layout = 'left', -- 'float', 'left', 'right', 'above', 'below'
@@ -51,7 +51,7 @@ local help = {
     'n -> <c-l> -> clear session',
     'i -> <c-n> -> new session',
     'n -> <c-n> -> new session',
-    'n -> <esc> -> close window',
+    'n -> q -> close window',
     'n -> ? -> toggle help',
   },
 }
@@ -215,7 +215,9 @@ function session.new(opts)
         vim.fn.flatten({
           'curl',
           '--no-buffer',
-          global_internal_config.chat.url,
+          '-H',
+          'Content-Type: application/json',
+          global_internal_config.base_url .. '/api/chat',
           '-d',
           converter.to_chat_request(obj.config, obj.messages),
         }),
@@ -262,7 +264,7 @@ function session.new(opts)
     end,
   })
 
-  vim.keymap.set({ 'n' }, '<esc>', '', {
+  vim.keymap.set({ 'n' }, 'q', '', {
     buffer = obj.bufnr,
     silent = true,
     callback = function()
@@ -390,6 +392,20 @@ end
 
 function M.change_default_chat_model(model)
   global_internal_config.chat.model = model
+end
+
+function M._list_models()
+  local res = nil
+  vim
+    .system({ 'curl', '-s', global_internal_config.base_url .. '/api/tags' }, {
+      stdout = function(_, data)
+        if data then
+          res = vim.json.decode(data)
+        end
+      end,
+    })
+    :wait()
+  return res and res.models or {}
 end
 
 function M.show_config()
