@@ -413,7 +413,7 @@ function M.show_config()
 end
 
 function M.setup(opts)
-  global_internal_config = vim.tbl_extend('force', default_config, opts or {})
+  global_internal_config = vim.tbl_deep_extend('force', default_config, opts or {})
   M.chat = Chat.new()
 
   M.chat:restore()
